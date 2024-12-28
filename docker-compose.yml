@@ -1,0 +1,35 @@
+# Docker Compose file for Apache Spark development environment
+# This configuration sets up a single-node Spark cluster for development purposes
+
+services:
+  spark:
+    build: .
+    container_name: spark-dev  # Fixed container name for easy reference
+    hostname: spark-dev        # Hostname must match the SPARK_LOCAL_IP environment variable
+    networks:
+      - spark-net             # Custom network for Spark communication
+    ports:
+      - "4040:4040"  # Port for Spark Web UI (application monitoring)
+      - "8080:8080"  # Port for Spark Master Web UI
+      - "7077:7077"  # Port for Spark master/worker communication
+    volumes:
+      - ./workspace:/workspace  # Mount local workspace directory into container
+    environment:
+      # Spark configuration environment variables
+      - SPARK_LOCAL_IP=spark-dev      # Must match hostname for proper networking
+      - SPARK_MASTER_HOST=spark-dev   # Spark master hostname
+      - SPARK_DRIVER_HOST=spark-dev   # Spark driver hostname
+    healthcheck:
+      # Regular health checks to ensure Spark processes are running
+      test: ["CMD", "bash", "-c", "ps aux | grep spark"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    stdin_open: true   # Keep STDIN open for interactive use
+    tty: true         # Allocate a pseudo-TTY for better interactive experience
+    restart: unless-stopped  # Automatically restart container unless manually stopped
+
+# Network configuration
+networks:
+  spark-net:
+    driver: bridge    # Use bridge network driver for container communication
